@@ -21,11 +21,10 @@ def main():
     c.execute(sql)
     
     # 検索
-    image_info_list = search("cat", 10)
-    #image_info_list = search("二次元 女", 1000)
-    #image_info_list = search("キャラ 女", 1000)
-    #image_info_list = search("萌え 女", 1000)
-    #image_info_list = search("ゲーム 女", 1000)
+    
+    image_info_list = search("二次元 女", 1000)
+    image_info_list = search("キャラ 女", 1000)
+    image_info_list = search("ゲーム 女", 1000)
             
     conn.close()
     print "create_list_end"

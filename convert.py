@@ -60,8 +60,10 @@ def convert_img(fileName, rename, format, save_size):
     # 横幅のほうが広い=立ち絵としての構図がおかしく、サンプルとして適さない
     if origin_width > origin_height:
         return 'Not suitable'
-    if origin_width > 500:
-        return 'Not big'
+    if origin_width > 1500:
+        return 'width Too Big'
+    if origin_height > 1500:
+        return 'height Too Big'
     
     #中央揃えするための変数
     x_pos = 0 
