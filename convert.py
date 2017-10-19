@@ -9,38 +9,62 @@ from PIL import Image   # 画像変換用モジュール
 import sqlite3
 from datetime import datetime
 
+# 成功時DBに入るメッセージ
+SUCCESS = "success"
 def main():
+    global SUCCESS
+    file_id = 1
     # sqlLiteに画像リストを格納するため、DBを定義
     dbname = 'database.db'
     conn = sqlite3.connect(dbname)
     c = conn.cursor()
-    
     # convertが済んでいないところから開始
-    sql = 'SELECT * FROM "pinterest" WHERE convert_flg= 0 ORDER BY "id" ASC'
+    sql = 'SELECT * FROM "pinterest" WHERE status= "0" ORDER BY "id" ASC'
     c.execute(sql)
-
+    
     for row in c.fetchall():
-        convert_img(row[2], str(row[0]), "jpg", 200)
-        print row[0]
-        sql = 'UPDATE "pinterest" SET "convert_flg"=1 WHERE ("id" =  '+str(row[0])+')'
+
+        ## ファイルを連番にする処理。変換済みのうち、save_idの最大値を取得して+1。
+        sql = 'SELECT MAX(save_id)+1 FROM pinterest WHERE status = "'+SUCCESS+'"'
         c.execute(sql)
+        
+        for save_id in c.fetchone():
+            file_id = save_id
+        if file_id is None:
+            file_id = 1
+            
+        status = convert_img(row[2], str(file_id), "jpg", 200)
+        
+        if status != SUCCESS:
+            sql = 'UPDATE "pinterest" SET "status"="'+status+'"  WHERE ("id" =  '+str(row[0])+')'
+        else:
+            sql = 'UPDATE "pinterest" SET "status"="'+status+'" , "save_id"='+ str(file_id) +' WHERE ("id" =  '+str(row[0])+')'
+        c.execute(sql)
+                
         conn.commit()
     conn.close()
 
 def convert_img(fileName, rename, format, save_size):
+    global SUCCESS
 
     # ファイルオープン
-    file =io.BytesIO(urlopen(fileName).read())
-    origin = Image.open(file)
+    try:
+        file =io.BytesIO(urlopen(fileName).read())
+        origin = Image.open(file)
+    except:
+        print 'image can not load'
+        return 'Load Error'
+    
     origin_width, origin_height = origin.size
     
     # 横幅のほうが広い=立ち絵としての構図がおかしく、サンプルとして適さない
     if origin_width > origin_height:
-        return
+        return 'Not suitable'
+    if origin_width > 500:
+        return 'Not big'
     
     #中央揃えするための変数
     x_pos = 0 
-    
     # 縮小比率と中央揃えの計算
     if origin_height > save_size:
         width = origin_width / (origin_height / save_size)
@@ -74,8 +98,10 @@ def convert_img(fileName, rename, format, save_size):
     fileName = re.search("(?<!\.)\w+", fileName).group(0) + "." + format    
     resize = canvas.resize((save_size, save_size), Image.BICUBIC)
     # 画像の保存
+    print("convert_"+rename)
     resize.save("convert/"+rename+"."+format, returnFormat(format), quality=100, optimize=True)
-            
+    
+    return SUCCESS
             
 # returnFormat()
 # 渡されたフォーマットを大文字で返す

@@ -1,2 +1,2 @@
-python get.py
-python convert.py
+python -u get.py
+python -u convert.py

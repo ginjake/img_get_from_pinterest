@@ -17,12 +17,18 @@ def main():
     # テーブル初期化
     sql = 'DROP TABLE IF EXISTS pinterest'
     c.execute(sql)
-    sql = 'CREATE TABLE IF NOT EXISTS pinterest (id INTEGER PRIMARY KEY, img_id INTEGER, url STRING, convert_flg INTEGER, description STRING, search_word STRING, date DATETIME)'
+    sql = 'CREATE TABLE IF NOT EXISTS pinterest (id INTEGER PRIMARY KEY, save_id INTEGER, url STRING, status STRING, description STRING, search_word STRING, date DATETIME)'
     c.execute(sql)
     
     # 検索
-    image_info_list = search("犬", 10)
+    image_info_list = search("cat", 10)
+    #image_info_list = search("二次元 女", 1000)
+    #image_info_list = search("キャラ 女", 1000)
+    #image_info_list = search("萌え 女", 1000)
+    #image_info_list = search("ゲーム 女", 1000)
+            
     conn.close()
+    print "create_list_end"
     
 def search(query, num_pins):
     count = 0; #処理済みの数。デバッグ用に
@@ -128,8 +134,8 @@ def search(query, num_pins):
  
     
 def save_db(id, image_url, description, search_word):
-    sql = 'insert INTO "pinterest" ("img_id", "url", "convert_flg", "description", "search_word", "date")  values (?, ?, ?, ?, ?, ?)'
-    c.execute(sql, (id, image_url, 0, description, search_word, datetime.now().strftime("%Y/%m/%d %H:%M:%S")))
+    sql = 'insert INTO "pinterest" ("save_id", "url", "status", "description", "search_word", "date")  values (?, ?, ?, ?, ?, ?)'
+    c.execute(sql, (0, image_url, 0, description, search_word, datetime.now().strftime("%Y/%m/%d %H:%M:%S")))
     conn.commit()
 
 if __name__ == '__main__':
