@@ -21,12 +21,8 @@ def main():
     c.execute(sql)
     
     # 検索
-    #image_info_list = search("立ち絵 女 ", 20)
-    image_info_list = search("シンデレラガールズ", 20)
-    image_info_list = search("ラブライブ", 20)    
-    image_info_list = search("バンドリ", 20)
-    image_info_list = search("イロドリミドリ", 20)
-    image_info_list = search("ひなビタ", 20)
+    image_info_list = search("立ち絵 女 ", 100)
+
     conn.close()
     print("create_list_end")
     

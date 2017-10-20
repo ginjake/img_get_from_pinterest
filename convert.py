@@ -34,14 +34,13 @@ def main():
             file_id = 1
             
         status = convert_img(row[2], str(file_id), "jpg", 200)
-        
         if status != SUCCESS:
             sql = 'UPDATE "pinterest" SET "status"="'+status+'"  WHERE ("id" =  '+str(row[0])+')'
         else:
             sql = 'UPDATE "pinterest" SET "status"="'+status+'" , "save_id"='+ str(file_id) +' WHERE ("id" =  '+str(row[0])+')'
         c.execute(sql)
-                
         conn.commit()
+        
     conn.close()
     print("end")
 
@@ -102,7 +101,7 @@ def convert_img(fileName, rename, format, save_size):
     percent_black_pixel = float(black_pixel)/pixel_sum * 100.0
 
     if percent_white_pixel < 10 and percent_black_pixel < 10:
-        return "背景がない"
+        return "背景判定"
     if percent_white_pixel > 70:
         return "白が多すぎる"
     if percent_black_pixel > 70:
