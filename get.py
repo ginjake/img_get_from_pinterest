@@ -21,13 +21,14 @@ def main():
     c.execute(sql)
     
     # 検索
-    
-    image_info_list = search("二次元 女", 1000)
-    image_info_list = search("キャラ 女", 1000)
-    image_info_list = search("ゲーム 女", 1000)
-            
+    #image_info_list = search("立ち絵 女 ", 20)
+    image_info_list = search("シンデレラガールズ", 20)
+    image_info_list = search("ラブライブ", 20)    
+    image_info_list = search("バンドリ", 20)
+    image_info_list = search("イロドリミドリ", 20)
+    image_info_list = search("ひなビタ", 20)
     conn.close()
-    print "create_list_end"
+    print("create_list_end")
     
 def search(query, num_pins):
     count = 0; #処理済みの数。デバッグ用に

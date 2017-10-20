@@ -1,13 +1,13 @@
 # coding:utf-8
 import os, re, sys, time
 import io
-from urllib import urlopen
-import requests
+import urllib.request
 import json
 import bs4 # beautifulSoupe4
 from PIL import Image   # 画像変換用モジュール
 import sqlite3
 from datetime import datetime
+import platform
 
 # 成功時DBに入るメッセージ
 SUCCESS = "success"
@@ -43,16 +43,18 @@ def main():
                 
         conn.commit()
     conn.close()
+    print("end")
 
 def convert_img(fileName, rename, format, save_size):
     global SUCCESS
 
     # ファイルオープン
     try:
-        file =io.BytesIO(urlopen(fileName).read())
+        response = urllib.request.urlopen(fileName)
+        file =io.BytesIO(response.read())
         origin = Image.open(file)
     except:
-        print 'image can not load'
+        print ('image can not load')
         return 'Load Error'
     
     origin_width, origin_height = origin.size
@@ -60,6 +62,7 @@ def convert_img(fileName, rename, format, save_size):
     # 横幅のほうが広い=立ち絵としての構図がおかしく、サンプルとして適さない
     if origin_width > origin_height:
         return 'Not suitable'
+    # でかすぎ
     if origin_width > 1500:
         return 'width Too Big'
     if origin_height > 1500:
@@ -71,23 +74,52 @@ def convert_img(fileName, rename, format, save_size):
     if origin_height > save_size:
         width = origin_width / (origin_height / save_size)
         height = save_size
-        x_pos = (origin_height - origin_width) / 2
+        x_pos = int((origin_height - origin_width) / 2)
     else:
         width = origin_width
         height = origin_height
         
-    # 中央に揃えるのと、パレットモードの解除を兼ねて新規レイヤーに張り付け
+        
+    # 色の比率で判定する
+    white_pixel = 0
+    black_pixel = 0
+    # パレットモードの解除用に、判定用レイヤーに張り付け
+    judge_layer = Image.new('RGBA', (origin_width, origin_height), (0, 0, 0, 0))
+    judge_layer.paste(origin, (0, 0))
+    for x in range(origin_width):
+        for y in range(origin_height):
+            pixel = judge_layer.getpixel((x, y))
+            if pixel[0] == 255 and pixel[1] == 255 and pixel[2] == 255:
+                white_pixel += 1
+            if pixel[0] == 0 and pixel[1] == 0 and pixel[2] == 0:
+                black_pixel += 1
+                
+    # ピクセルの合計
+    pixel_sum = origin_height*origin_width
+    
+    # 黒と白の比率
+    percent_white_pixel = float(white_pixel)/pixel_sum * 100.0
+    percent_black_pixel = float(black_pixel)/pixel_sum * 100.0
+
+    if percent_white_pixel < 10 and percent_black_pixel < 10:
+        return "背景がない"
+    if percent_white_pixel > 70:
+        return "白が多すぎる"
+    if percent_black_pixel > 70:
+        return "黒が多すぎる"
+    
+    # 中央に揃えるため新規レイヤーに張り付け
     layer = Image.new('RGBA', (origin_height, origin_height), (0, 0, 0, 0))
     layer.paste(origin, (x_pos, 0))
     
     # 透過を白に塗りつぶす用。
     canvas = Image.new('RGB', layer.size, (255, 255, 255))
-    for x in xrange(origin_height):
+    for x in range(origin_height):
         if x < x_pos:
             continue
         if x > x_pos+origin_width:
             continue
-        for y in xrange(origin_height):
+        for y in range(origin_height):
             pixel = layer.getpixel((x, y))
             # 透過なら白に塗りつぶし
             if pixel[3] == 0 :
