@@ -1,8 +1,6 @@
 # OSはCentOS
 FROM centos:latest
-RUN  export PYTHONIOENCODING="utf-8"
 # 各パッケージをインストール
-# pipやvirtualenvインストールも想定しています。
 
 RUN yum -y update
 RUN yum -y groupinstall "Development Tools"
@@ -38,23 +36,34 @@ RUN yum -y install \
            python-devel  \
            locales \
            locales-all \
+           language-pack-ja \
 
-# Python3.5.2をインストール
-# Python3.5.2をダウンロード
+
+# install pyenv
 WORKDIR /root
-RUN wget https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz
-RUN tar xzvf Python-3.5.2.tgz
 
-# makeでインストール
-WORKDIR ./Python-3.5.2
-RUN ./configure --with-threads
-RUN make install
+RUN curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+ENV PATH ~/.pyenv/bin:$PATH
+RUN echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bash_profile
+RUN source ~/.bash_profile
+
+RUN pyenv install 3.6.0
+RUN pyenv global 3.6.0
+ENV PATH /root/.pyenv/versions/3.6.0/bin/:$PATH
+
+
+ENV LANG=ja_JP.UTF-8  
+ENV LANGUAGE=ja_JP:ja  
+ENV LC_ALL=ja_JP.UTF-8
+ENV PYTHONIOENCODING utf-8
 
 # pipインストール(最新版)
 RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN python get-pip.py
 
 # 必要なものインストール
+RUN pip install virtualenv
 RUN pip install beautifulsoup4
 RUN pip install jupyter
 RUN pip install Pillow
@@ -67,10 +76,4 @@ WORKDIR /app
 # ローカルのカレントディレクトリの中身を全て コンテナのワークディレクトリにコピーする
 # コンテナ実行時ではなく、イメージ作成時にコピーされる
 ADD . /app
-
-EXPOSE 80
-
-# 環境変数の指定
-# Docker コンテナで export NAME=World した状態になる
-ENV NAME World
 
