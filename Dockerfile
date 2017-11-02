@@ -55,7 +55,6 @@ ENV PATH /root/.pyenv/versions/3.6.0/bin/:$PATH
 
 ENV LANG=ja_JP.UTF-8  
 ENV LANGUAGE=ja_JP:ja  
-ENV LC_ALL=ja_JP.UTF-8
 ENV PYTHONIOENCODING utf-8
 
 # pipインストール(最新版)
@@ -69,7 +68,9 @@ RUN pip install jupyter
 RUN pip install Pillow
 RUN pip install requests
 RUN pip install urllib3
-
+RUN pip install tqdm
+RUN pip install scipy
+RUN pip install tensorflow
 # コンテナのワークディレクトリの指定
 WORKDIR /app
 

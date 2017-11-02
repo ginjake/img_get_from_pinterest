@@ -8,6 +8,7 @@ from PIL import Image   # 画像変換用モジュール
 import sqlite3
 from datetime import datetime
 import platform
+import re
 
 # 成功時DBに入るメッセージ
 SUCCESS = "success"
@@ -25,15 +26,14 @@ def main():
     for row in c.fetchall():
 
         ## ファイルを連番にする処理。変換済みのうち、save_idの最大値を取得して+1。
-        sql = 'SELECT MAX(save_id)+1 FROM pinterest WHERE status = "'+SUCCESS+'"'
+        sql = 'SELECT MAX(save_id)+2 FROM pinterest WHERE status = "'+SUCCESS+'"'
         c.execute(sql)
         
         for save_id in c.fetchone():
             file_id = save_id
         if file_id is None:
             file_id = 1
-            
-        status = convert_img(row[2], str(file_id), "jpg", 200)
+        status = convert_img(row[2], file_id, "jpg", 200, str(row[4]))
         if status != SUCCESS:
             sql = 'UPDATE "pinterest" SET "status"="'+status+'"  WHERE ("id" =  '+str(row[0])+')'
         else:
@@ -44,7 +44,7 @@ def main():
     conn.close()
     print("end")
 
-def convert_img(fileName, rename, format, save_size):
+def convert_img(fileName, rename, format, save_size, description):
     global SUCCESS
 
     # ファイルオープン
@@ -58,13 +58,16 @@ def convert_img(fileName, rename, format, save_size):
     
     origin_width, origin_height = origin.size
     
+    if description.find('pixiv') > -1:
+        return 'Pixivだから除外'
+    
     # 横幅のほうが広い=立ち絵としての構図がおかしく、サンプルとして適さない
     if origin_width > origin_height:
         return 'Not suitable'
     # でかすぎ
     if origin_width > 1500:
         return 'width Too Big'
-    if origin_height > 1500:
+    if origin_height > 3000:
         return 'height Too Big'
     
     #中央揃えするための変数
@@ -131,9 +134,16 @@ def convert_img(fileName, rename, format, save_size):
     fileName = re.search("(?<!\.)\w+", fileName).group(0) + "." + format    
     resize = canvas.resize((save_size, save_size), Image.BICUBIC)
     # 画像の保存
-    print("convert_"+rename)
-    resize.save("convert/"+rename+"."+format, returnFormat(format), quality=100, optimize=True)
+
+    file_num = rename
+    resize.save("data/celebA/"+str('%06d' %(file_num))+"."+format, returnFormat(format), quality=100, optimize=True)
     
+    mirror = resize.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    file_num = file_num + 1
+    mirror.save("data/celebA/"+str('%06d' %(file_num))+"."+format, returnFormat(format), quality=100, optimize=True)
+    
+    print(str('%06d' %(file_num))+"."+format+" 変換")
     return SUCCESS
             
 # returnFormat()
